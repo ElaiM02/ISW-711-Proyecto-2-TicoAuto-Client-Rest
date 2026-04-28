@@ -15,7 +15,7 @@ function cerrarNotif() {
     document.getElementById("notifModal").classList.remove("active");
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const params = new URLSearchParams(window.location.search);
     vehicleId = params.get("id");
 
@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    loadVehicle(vehicleId);
+    await loadVehicle(vehicleId);
     loadQuestions();
 });
 
@@ -94,7 +94,7 @@ async function loadQuestions() {
     const input = document.getElementById("questionInput");
     const questionSection = document.getElementById("questionSection");
 
-    if (userId && userId !== ownerId.toString()) {
+    if (userId && ownerId && userId !== ownerId.toString()) {
         questionSection.style.display = "block";
     } else {
         questionSection.style.display = "none";
