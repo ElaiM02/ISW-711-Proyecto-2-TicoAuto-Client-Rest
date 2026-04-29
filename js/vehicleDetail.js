@@ -45,7 +45,7 @@ async function loadVehicle(id) {
         const token = getToken();
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        const response = await fetch(`${API_BASE}/vehicle/${id}`, { headers });
+        const response = await fetch(`${API_BASE}/vehicles/${id}`, { headers });
         if (!response.ok) throw new Error("Error al cargar el vehículo");
 
         const data = await response.json();
@@ -81,7 +81,7 @@ async function loadQuestions() {
         return;
     }
 
-    const response = await fetch(`${API_BASE}/question/${vehicleId}`, {
+    const response = await fetch(`${API_BASE}/vehicles/${vehicleId}/questions`, {
         headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json"
@@ -165,7 +165,7 @@ async function createQuestion() {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/question/${vehicleId}`, {
+        const response = await fetch(`${API_BASE}/vehicles/${vehicleId}/questions`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -204,7 +204,7 @@ async function createAnswer(questionId) {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/answer/${questionId}`, {
+        const response = await fetch(`${API_BASE}/questions/${questionId}/answers`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

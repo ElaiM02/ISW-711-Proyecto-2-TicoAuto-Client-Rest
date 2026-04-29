@@ -6,7 +6,7 @@ window.onload = function() {
 
 async function getVehicles() {
     try {
-        const response = await fetch(`${API_BASE}/vehicle`);
+        const response = await fetch(`${API_BASE}/vehicles`);
         const data = await response.json();
         renderVehicles(data.data);
     } catch (error) {
@@ -69,7 +69,7 @@ async function searchVehicles(){
             if (value) params.append(key, value);
         });
 
-        const url = `${API_BASE}/vehicle${params.toString() ? '?' + params.toString() : ''}`;
+        const url = `${API_BASE}/vehicles${params.toString() ? '?' + params.toString() : ''}`;
         const response = await fetch(url);
         const data = await response.json();
 

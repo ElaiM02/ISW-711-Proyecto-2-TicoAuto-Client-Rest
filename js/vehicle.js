@@ -57,7 +57,7 @@ async function createVehicle() {
         const image = document.getElementById("image").files[0];
         if (image) formData.append("image", image);
 
-        const url = editVehicleId ? `${API_BASE}/vehicle/${editVehicleId}` : `${API_BASE}/vehicle`;
+        const url = editVehicleId ? `${API_BASE}/vehicles/${editVehicleId}` : `${API_BASE}/vehicles`;
         const method = editVehicleId ? "PATCH" : "POST";
 
         const response = await fetch(url, {
@@ -94,7 +94,7 @@ function resetForm() {
 
 async function getVehicles(){
     try {
-        const response = await fetch(`${API_BASE}/vehicle/me`, {
+        const response = await fetch(`${API_BASE}/vehicles/me`, {
             headers: { "Authorization": `Bearer ${getToken()}` }
         });
         const result = await response.json();
@@ -140,7 +140,7 @@ function viewVehicle(id) {
 
 async function editVehicle(id){
     try {
-        const response = await fetch(`${API_BASE}/vehicle/${id}`, {
+        const response = await fetch(`${API_BASE}/vehicles/${id}`, {
             headers: { "Authorization": `Bearer ${getToken()}` }
         });
 
@@ -179,7 +179,7 @@ async function deleteVehicle(id){
         "¿Estás seguro de que deseas eliminar este vehículo? Esta acción no se puede deshacer.",
         async () => {
             try {
-                const response = await fetch(`${API_BASE}/vehicle/${id}`, {
+                const response = await fetch(`${API_BASE}/vehicles/${id}`, {
                     method: "DELETE",
                     headers: {"Authorization": `Bearer ${getToken()}`}
                 });
@@ -200,7 +200,7 @@ async function deleteVehicle(id){
 
 async function markAsSold(id) {
     try {
-        const response = await fetch(`${API_BASE}/vehicle/${id}/sold`, {
+        const response = await fetch(`${API_BASE}/vehicles/${id}/sold`, {
             method: "PATCH",
             headers: { "Authorization": `Bearer ${getToken()}` }
         });
