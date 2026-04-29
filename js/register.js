@@ -41,12 +41,17 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!resp.ok) {
                 showErrorModal("Cédula no encontrada", "La cédula no existe en el padrón electoral.");
                 document.getElementById("name").value = "";
+                document.getElementById("first_lastname").value = "";
+                document.getElementById("second_lastname").value = "";
                 return;
             }
 
             const person = await resp.json();
+            document.getElementById("name").value = person.nombre;
+            document.getElementById("first_lastname").value = person.primer_apellido;
+            document.getElementById("second_lastname").value = person.segundo_apellido;
+
             const nombreCompleto = `${person.nombre} ${person.primer_apellido} ${person.segundo_apellido}`;
-            document.getElementById("name").value = nombreCompleto;
             document.getElementById("modalName").textContent = nombreCompleto;
             document.getElementById("modalSuccess").style.display = "block";
 
