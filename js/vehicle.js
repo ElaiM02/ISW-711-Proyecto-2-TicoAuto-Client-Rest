@@ -120,7 +120,7 @@ async function getVehicles(){
                     <button onclick="viewVehicle('${v._id}')">Ver Detalle</button>
                     <button class="btn-edit" onclick="editVehicle('${v._id}')">Editar</button>
                     <button class="btn-delete" onclick="deleteVehicle('${v._id}')">Eliminar</button>
-                    <button class="btn-sold" onclick="markAsSold('${v._id}')">
+                    <button class="btn-sold" onclick="markAsSold('${v._id}', '${v.status}')">
                         ${v.status === 'sold' ? 'Marcar disponible' : 'Marcar vendido'}
                     </button>
                 </div>
@@ -198,11 +198,17 @@ async function deleteVehicle(id){
     );
 }
 
-async function markAsSold(id) {
+async function markAsSold(id, currentStatus) {
+    const newStatus = currentStatus === 'sold' ? 'available' : 'sold';
+
     try {
-        const response = await fetch(`${API_BASE}/vehicles/${id}/sold`, {
+        const response = await fetch(`${API_BASE}/vehicles/${id}`, {
             method: "PATCH",
-            headers: { "Authorization": `Bearer ${getToken()}` }
+            headers: {
+                "Authorization": `Bearer ${getToken()}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ status: newStatus })
         });
 
         if (response.ok) {
