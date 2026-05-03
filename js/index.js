@@ -1,4 +1,20 @@
-const API_BASE= "http://localhost:3008/api";
+const VEHICLES_QUERY = `
+    query GetVehicles($filter: VehicleFilterInput) {
+        vehicles(filter: $filter) {
+            data {
+                id
+                brand
+                model
+                year
+                price
+                description
+                image
+                status
+                owner { name }
+            }
+        }
+    }
+`;
 
 window.onload = function() {
     getVehicles();
@@ -6,9 +22,8 @@ window.onload = function() {
 
 async function getVehicles() {
     try {
-        const response = await fetch(`${API_BASE}/vehicles`);
-        const data = await response.json();
-        renderVehicles(data.data);
+        const data = await gqlQuery(VEHICLES_QUERY);
+        renderVehicles(data.vehicles.data);
     } catch (error) {
         console.error(error);
         alert('No se pudieron cargar los vehículos');
@@ -18,11 +33,11 @@ async function getVehicles() {
 function renderVehicles(list) {
     const container = document.getElementById('vehicleContainer');
 
-     if (!list || list.length === 0) {
-    container.innerHTML = "<p>No hay vehículos disponibles</p>";
-    return;
-     }
-    
+    if (!list || list.length === 0) {
+        container.innerHTML = "<p>No hay vehículos disponibles</p>";
+        return;
+    }
+
     container.innerHTML = list.map(vehicle => {
         const imageUrl = vehicle.image
             ? `http://localhost:3008/uploads/${vehicle.image}`
@@ -41,39 +56,37 @@ function renderVehicles(list) {
                 <p class="desc">${vehicle.description || "Sin descripción"}</p>
                 <p><b>Año:</b> ${vehicle.year}</p>
                 <p><b>Precio:</b> $${vehicle.price}</p>
-                <button onclick="viewVehicle('${vehicle._id}')">Ver Detalle</button>
+                <button onclick="viewVehicle('${vehicle.id}')">Ver Detalle</button>
             </div>
         `;
     }).join('');
 }
-    
+
 function viewVehicle(id) {
     window.location.href = `vehicleDetail.html?id=${id}`;
 }
 
-async function searchVehicles(){
+async function searchVehicles() {
     try {
-        const params = new URLSearchParams();
+        const filter = {};
+        const brand    = document.getElementById("brandFilter").value.trim();
+        const model    = document.getElementById("modelFilter").value.trim();
+        const minYear  = document.getElementById("minYearFilter").value;
+        const maxYear  = document.getElementById("maxYearFilter").value;
+        const minPrice = document.getElementById("minPriceFilter").value;
+        const maxPrice = document.getElementById("maxPriceFilter").value;
+        const status   = document.getElementById("statusFilter").value;
 
-        const filters = {
-            brand: document.getElementById("brandFilter").value,
-            model: document.getElementById("modelFilter").value,
-            minYear: document.getElementById("minYearFilter").value,
-            maxYear: document.getElementById("maxYearFilter").value,
-            minPrice: document.getElementById("minPriceFilter").value,
-            maxPrice: document.getElementById("maxPriceFilter").value,
-            status: document.getElementById("statusFilter").value
-        };
+        if (brand)    filter.brand    = brand;
+        if (model)    filter.model    = model;
+        if (minYear)  filter.minYear  = Number(minYear);
+        if (maxYear)  filter.maxYear  = Number(maxYear);
+        if (minPrice) filter.minPrice = Number(minPrice);
+        if (maxPrice) filter.maxPrice = Number(maxPrice);
+        if (status)   filter.status   = status;
 
-        Object.entries(filters).forEach(([key, value]) => {
-            if (value) params.append(key, value);
-        });
-
-        const url = `${API_BASE}/vehicles${params.toString() ? '?' + params.toString() : ''}`;
-        const response = await fetch(url);
-        const data = await response.json();
-
-        renderVehicles(data.data);
+        const data = await gqlQuery(VEHICLES_QUERY, { filter });
+        renderVehicles(data.vehicles.data);
     } catch (error) {
         console.error(error);
         alert('Error al buscar vehículos');
@@ -81,7 +94,7 @@ async function searchVehicles(){
 }
 
 function clearFilters() {
-    ["brandFilter", "modelFilter", "minYearFilter", "maxYearFilter", 
+    ["brandFilter", "modelFilter", "minYearFilter", "maxYearFilter",
      "minPriceFilter", "maxPriceFilter", "statusFilter"].forEach(id => {
         document.getElementById(id).value = "";
     });
