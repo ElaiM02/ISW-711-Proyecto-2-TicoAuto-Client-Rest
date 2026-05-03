@@ -4,6 +4,40 @@ const getToken = () => sessionStorage.getItem("authToken");
 let vehicleId = null;
 let ownerId = null;
 
+const VEHICLE_QUERY = `
+    query GetVehicle($id: ID!) {
+        vehicle(id: $id) {
+            id
+            brand
+            model
+            year
+            price
+            description
+            image
+            status
+            owner { id name }
+        }
+    }
+`;
+
+const QUESTIONS_QUERY = `
+    query GetQuestionsByVehicle($vehicleId: ID!) {
+        questionsByVehicle(vehicleId: $vehicleId) {
+            data {
+                id
+                question
+                createdAt
+                user { id name }
+                answer {
+                    answer
+                    createdAt
+                    user { name }
+                }
+            }
+        }
+    }
+`;
+
 function showNotif(title, msg, icon = "ℹ️") {
     document.getElementById("notifIcon").textContent = icon;
     document.getElementById("notifTitle").textContent = title;
@@ -39,22 +73,24 @@ function getUserIdFromToken() {
     }
 }
 
+function formatDate(value) {
+    if (!value) return '';
+    const asNumber = Number(value);
+    const date = Number.isFinite(asNumber) ? new Date(asNumber) : new Date(value);
+    return isNaN(date.getTime()) ? '' : date.toLocaleString();
+}
+
 async function loadVehicle(id) {
     try {
-        const headers = {};
-        const token = getToken();
-        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const data = await gqlQuery(VEHICLE_QUERY, { id });
+        const v = data.vehicle;
 
-        const response = await fetch(`${API_BASE}/vehicles/${id}`, { headers });
-        if (!response.ok) throw new Error("Error al cargar el vehículo");
+        if (!v) throw new Error("Vehículo no encontrado");
 
-        const data = await response.json();
-        const v = data.data || data;
+        ownerId = v.owner?.id || null;
 
-        ownerId = v.owner?._id || v.owner;
-
-        const imgSrc = v.image 
-            ? `http://localhost:3008/uploads/${v.image}` 
+        const imgSrc = v.image
+            ? `http://localhost:3008/uploads/${v.image}`
             : "https://via.placeholder.com/400";
 
         document.getElementById("vehicleDetail").innerHTML = `
@@ -81,20 +117,14 @@ async function loadQuestions() {
         return;
     }
 
-    const response = await fetch(`${API_BASE}/vehicles/${vehicleId}/questions`, {
-        headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-        }
-    });
+    const data = await gqlQuery(QUESTIONS_QUERY, { vehicleId });
+    const questions = data.questionsByVehicle.data;
 
-    const result = await response.json();
-    const questions = result.data;
     const container = document.getElementById("questionList");
     const input = document.getElementById("questionInput");
     const questionSection = document.getElementById("questionSection");
 
-    if (userId && ownerId && userId !== ownerId.toString()) {
+    if (userId && ownerId && userId !== ownerId) {
         questionSection.style.display = "block";
     } else {
         questionSection.style.display = "none";
@@ -105,7 +135,7 @@ async function loadQuestions() {
       return;
     }
 
-    const alreadyAsked = questions.some(q => q.userId === userId && !q.answer);
+    const alreadyAsked = questions.some(q => q.user?.id === userId && !q.answer);
     if (alreadyAsked && input) input.disabled = true;
 
     let html = "";
@@ -118,17 +148,17 @@ async function loadQuestions() {
         html += `
             <div class="question-card">
                 <p>
-                    <b>${q.user || "Usuario"}:</b> ${q.question}
-                    ${q.userId === userId ? '<span style="color:green;"> (Tu pregunta)</span>' : ''}
+                    <b>${q.user?.name || "Usuario"}:</b> ${q.question}
+                    ${q.user?.id === userId ? '<span style="color:green;"> (Tu pregunta)</span>' : ''}
                 </p>
-                <small>${new Date(q.createdAt).toLocaleString()}</small>
+                <small>${formatDate(q.createdAt)}</small>
       `;
 
         if (q.answer) {
             html += `
                 <div class="answer">
-                    <p><b>${q.answer.user || "Propietario"} respondió:</b> ${q.answer.text}</p>
-                    <small>${new Date(q.answer.createdAt).toLocaleString()}</small>
+                    <p><b>${q.answer.user?.name || "Propietario"} respondió:</b> ${q.answer.answer}</p>
+                    <small>${formatDate(q.answer.createdAt)}</small>
                 </div>
             `;
         }
