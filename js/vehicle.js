@@ -4,6 +4,36 @@ const getToken = () => sessionStorage.getItem("authToken");
 let editVehicleId = null;
 let conffirmCallback = null;
 
+const MY_VEHICLES_QUERY = `
+    query MyVehicles {
+        myVehicles {
+            data {
+                id
+                brand
+                model
+                year
+                price
+                image
+                status
+            }
+        }
+    }
+`;
+
+const VEHICLE_QUERY = `
+    query GetVehicle($id: ID!) {
+        vehicle(id: $id) {
+            id
+            brand
+            model
+            year
+            price
+            description
+            image
+        }
+    }
+`;
+
 function showNotif(title, msg, icon = "ℹ️") {
     document.getElementById("notifIcon").textContent = icon;
     document.getElementById("notifTitle").textContent = title;
@@ -94,11 +124,8 @@ function resetForm() {
 
 async function getVehicles(){
     try {
-        const response = await fetch(`${API_BASE}/vehicles/me`, {
-            headers: { "Authorization": `Bearer ${getToken()}` }
-        });
-        const result = await response.json();
-        const vehicles = result.data;
+        const data = await gqlQuery(MY_VEHICLES_QUERY);
+        const vehicles = data.myVehicles.data;
 
         if (!vehicles || vehicles.length === 0) {
             document.getElementById("vehicleList").innerHTML = "<tr><td colspan='6'>No tienes vehículos registrados</td></tr>";
@@ -117,10 +144,10 @@ async function getVehicles(){
                 <h3>${v.brand} ${v.model}</h3>
                 <p>${v.year} • $${v.price.toLocaleString()}</p>
                 <div class="card-actions">
-                    <button onclick="viewVehicle('${v._id}')">Ver Detalle</button>
-                    <button class="btn-edit" onclick="editVehicle('${v._id}')">Editar</button>
-                    <button class="btn-delete" onclick="deleteVehicle('${v._id}')">Eliminar</button>
-                    <button class="btn-sold" onclick="markAsSold('${v._id}', '${v.status}')">
+                    <button onclick="viewVehicle('${v.id}')">Ver Detalle</button>
+                    <button class="btn-edit" onclick="editVehicle('${v.id}')">Editar</button>
+                    <button class="btn-delete" onclick="deleteVehicle('${v.id}')">Eliminar</button>
+                    <button class="btn-sold" onclick="markAsSold('${v.id}', '${v.status}')">
                         ${v.status === 'sold' ? 'Marcar disponible' : 'Marcar vendido'}
                     </button>
                 </div>
@@ -140,16 +167,13 @@ function viewVehicle(id) {
 
 async function editVehicle(id){
     try {
-        const response = await fetch(`${API_BASE}/vehicles/${id}`, {
-            headers: { "Authorization": `Bearer ${getToken()}` }
-        });
+        const data = await gqlQuery(VEHICLE_QUERY, { id });
+        const vehicle = data.vehicle;
 
-        if (!response.ok) {
+        if (!vehicle) {
             showNotif("Error", "No se pudo cargar el vehículo.", "❌");
             return;
         }
-
-        const vehicle = await response.json();
 
         document.getElementById("brand").value = vehicle.brand;
         document.getElementById("model").value = vehicle.model;
@@ -163,7 +187,7 @@ async function editVehicle(id){
             preview.style.display = "block";
         }
 
-        editVehicleId = vehicle._id;
+        editVehicleId = vehicle.id;
         document.getElementById("formTitle").innerText = "Editar vehículo";
         document.getElementById("saveBtn").innerText = "Actualizar vehículo";
         document.getElementById("cancelEdit").style.display = "inline";
